@@ -21,7 +21,7 @@
 (def dirs { VK_LEFT  [-1  0] 
             VK_RIGHT [ 1  0]
             VK_UP    [ 0 -1] 
-	    VK_DOWN  [ 0  1]})
+            VK_DOWN  [ 0  1]})
 
 (defn add-points [& pts] 
   (vec (apply map + pts)))
@@ -48,30 +48,44 @@
 (defn turn [snake newdir] 
   (if newdir (assoc snake :dir newdir) snake))
 
+(defn border? [{[snake-head] :body, d :dir}]
+  (let [[x y] (add-points snake-head d)]
+    (or (= x 0) (= x width) (= y 0) (= y height))
+    )
+  )
 (defn win? [{body :body}]
   (>= (count body) win-length))
 
 (defn head-overlaps-body? [{[head & body] :body}]
   (includes? body head))
 
-(def lose? head-overlaps-body?)
+(def lose? head-overlaps-body?) 
+(def left-m [
+             [0 -1]
+             [1 0]])
 
 (defn eats? [{[snake-head] :body} {apple :location}]
    (= snake-head apple))
+
+(defn update-direction [{snake :snake :as game} newdir]
+  (merge game {:snake (turn snake newdir)}))
+(defn mult-mv [m v]
+  (map #(apply + %) (map #(map * % v) m)
+  ))
+(defn turn-left [dir]
+  (mult-mv left-m dir))
 
 ; START: update-positions
 (defn update-positions [{snake :snake, apple :apple, :as game}]
   (if (eats? snake apple)
     (merge game {:apple (create-apple) :snake (move snake :grow)})
-    (merge game {:snake (move snake)})))
+    (merge game {:snake (move snake)})
+    ))
 ; END: update-positions
 
-(defn update-direction [{snake :snake :as game} newdir]
-  (merge game {:snake (turn snake newdir)}))
 
 (defn reset-game [game]
   (merge game {:apple (create-apple) :snake (create-snake)}))
-
 ; ----------------------------------------------------------
 ; gui
 ; ----------------------------------------------------------
@@ -97,12 +111,16 @@
       (paint g (@game :apple)))
     ; START: swap!
     (actionPerformed [e] 
-      (swap! game update-positions)
+      (when (border? (@game :snake)) (swap! game update-direction (turn-left ((@game :snake) :dir))))
+
+      (swap! game update-positions )
       (when (lose? (@game :snake))
         (swap! game reset-game)
+
 	(JOptionPane/showMessageDialog frame "You lose!"))
     ; END: swap!
-      (when (win? (@game :snake))
+
+    (when (win? (@game :snake))
         (swap! game reset-game)
 	(JOptionPane/showMessageDialog frame "You win!"))
       (.repaint this))

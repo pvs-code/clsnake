@@ -1,0 +1,10 @@
+.classpath
+.project
+.settings/
+bin/
+classes/
+clojure-contrib-src.jar
+clojure-contrib.jar
+clojure-src.jar
+clojure.jar
+
