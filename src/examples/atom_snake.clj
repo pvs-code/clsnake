@@ -66,9 +66,16 @@
 
 (defn eats? [{[snake-head] :body} {apple :location}]
    (= snake-head apple))
+(defn opposite-dir? [d1 d2]
+  (= 0 (apply + (map #(if (> 0 %) % (- %)) (map + d1 d2)))))
+  
 
 (defn update-direction [{snake :snake :as game} newdir]
-  (merge game {:snake (turn snake newdir)}))
+  (let [dir (snake :dir)]
+    (if-not (opposite-dir? dir newdir)
+      (merge game {:snake (turn snake newdir)})
+      game)))
+
 (defn mult-mv [m v]
   (map #(apply + %) (map #(map * % v) m)
   ))
